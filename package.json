@@ -1,0 +1,21 @@
+{
+  "name": "stripe-token-payment-system",
+  "version": "1.0.0",
+  "description": "Stripe Token Payment System - Centralized wallet solution",
+  "main": "backend/node/server.js",
+  "scripts": {
+    "install-deps": "cd backend/node && npm install",
+    "start": "cd backend/node && npm start",
+    "dev": "cd backend/node && npm run dev"
+  },
+  "keywords": [
+    "stripe",
+    "payment",
+    "tokens"
+  ],
+  "author": "Thrushith",
+  "license": "MIT",
+  "engines": {
+    "node": "16.x"
+  }
+}
