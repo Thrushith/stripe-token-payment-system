@@ -9,28 +9,12 @@ const app = express();
 
 // ==================== MIDDLEWARE ====================
 
-// CORS Configuration - Allow both localhost and production URLs
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:8080',
-  'http://127.0.0.1:3000',
-  process.env.FRONTEND_URL || 'http://localhost:3000'
-];
-
+// CORS
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or server requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: ['http://localhost:3000', 'http://localhost:8080', 'http://127.0.0.1:3000', process.env.FRONTEND_URL || 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type']
 }));
 
 app.use(bodyParser.json());
@@ -45,56 +29,48 @@ app.use((req, res, next) => {
 
 // ==================== ROUTES ====================
 
-// Health Check
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    service: 'Stripe Token Payment System',
-    environment: process.env.NODE_ENV || 'development'
+    service: 'Stripe Token Payment System'
   });
 });
 
-// Payment Routes
-app.post('/api/create-checkout-session', paymentController.createCheckoutSession);
-app.post('/api/create-payment-intent', paymentController.createPaymentIntent);
-app.get('/api/payment-status/:id', paymentController.getPaymentStatus);
-app.get('/api/session/:id', paymentController.getSessionDetails);
-app.get('/api/transactions/:userId', paymentController.getTransactions);
+// Payment Routes - ONLY include routes that exist in your controller
+if (paymentController.createCheckoutSession) {
+  app.post('/api/create-checkout-session', paymentController.createCheckoutSession);
+}
 
-// Webhook Route
+if (paymentController.createPaymentIntent) {
+  app.post('/api/create-payment-intent', paymentController.createPaymentIntent);
+}
+
+// Webhook
 app.post('/api/webhook', express.raw({type: 'application/json'}), webhookController.handleWebhook);
 
 // 404 Handler
 app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found', path: req.path });
+  res.status(404).json({ error: 'Route not found' });
 });
 
 // Error Handler
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
-  res.status(500).json({ 
-    error: 'Internal Server Error',
-    message: err.message,
-    service: 'Stripe Token Payment System'
-  });
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
-// ==================== SERVER START ====================
+// ==================== START SERVER ====================
 
 const PORT = process.env.PORT || 4000;
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`✅ Server ready!`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
 });
 
-// Graceful Shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
   server.close(() => {
-    console.log('HTTP server closed');
+    console.log('Server closed');
     process.exit(0);
   });
 });
