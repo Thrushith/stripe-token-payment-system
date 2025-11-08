@@ -3,7 +3,7 @@
 
 const CONFIG = {
     // Backend API URL - Change this to your deployed backend URL in production
-    API_URL: 'http://localhost:4000',
+    API_URL: 'https://stripe-token-payment-system-production.up.railway.app',
     
     // Price per token (should match backend)
     PRICE_PER_TOKEN: 1,

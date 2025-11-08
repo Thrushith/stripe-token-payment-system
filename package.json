@@ -16,6 +16,6 @@
   "author": "Thrushith",
   "license": "MIT",
   "engines": {
-    "node": "16.x"
+    "node": "22.x"
   }
 }
