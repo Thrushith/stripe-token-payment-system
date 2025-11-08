@@ -238,22 +238,6 @@ Click "Pay $100.00"
 
 ---
 
-## 🧪 Test Different Scenarios
-
-### Declined Payment
-```
-Card: 4000 0000 0000 0002
-Expected: Payment declined
-```
-
-### 3D Secure Authentication
-```
-Card: 4000 0025 0000 3155
-Expected: Additional authentication required
-```
-
----
-
 ## 📊 API Endpoints Reference
 
 | Endpoint | Method | Purpose |
