@@ -1,6 +1,6 @@
 # 🪙 Stripe Token Payment System - Complete Setup Guide
 
-**Developer:** Thrushith  
+**Developer:** Thrushith Yelamanchili  
 **Created:** November 2025  
 **Status:** ✅ Production Ready
 
@@ -68,12 +68,9 @@ Before running this project, ensure you have installed:
 ## 🚀 Quick Start Guide
 
 ### Step 1: Clone the Repository
-
 ```bash
-git clone <your-repository-url>
-cd stripe-token-payment-system
+git clone https://github.com/Thrushith/stripe-token-payment-system.git
 ```
-
 ### Step 2: Install Backend Dependencies
 
 ```bash
@@ -241,22 +238,6 @@ Click "Pay $100.00"
 
 ---
 
-## 🧪 Test Different Scenarios
-
-### Declined Payment
-```
-Card: 4000 0000 0000 0002
-Expected: Payment declined
-```
-
-### 3D Secure Authentication
-```
-Card: 4000 0025 0000 3155
-Expected: Additional authentication required
-```
-
----
-
 ## 📊 API Endpoints Reference
 
 | Endpoint | Method | Purpose |
@@ -271,196 +252,9 @@ Expected: Additional authentication required
 
 ---
 
-## 🔄 Restarting After Computer Shutdown
-
-If you turn off your computer and want to restart:
-
-### 1. Verify Environment Variables
-
-Make sure `.env` file still has all keys:
-```bash
-cd backend/node
-cat .env  # View contents
-```
-
-### 2. Restart All 3 Services
-
-**Terminal 1:**
-```bash
-cd backend/node
-npm run dev
-```
-
-**Terminal 2:**
-```bash
-cd backend/node
-stripe listen --forward-to localhost:4000/api/webhook
-```
-
-**Terminal 3:**
-```bash
-cd frontend
-python -m http.server 3000
-```
-
-### 3. Access Application
-
-Open: http://localhost:3000
-
----
-
-## 🚨 Troubleshooting
-
-### Issue: "Payment controller not loaded"
-**Solution:** Ensure `backend/node/controllers/paymentController.js` exists
-```bash
-dir backend/node/controllers
-```
-
-### Issue: "Failed to fetch" when clicking payment
-**Solution:** Check backend is running on port 4000
-```bash
-curl http://localhost:4000/health
-```
-
-### Issue: Stripe webhook not working
-**Solution:** Verify webhook secret in `.env` matches terminal output
-- Stop backend (Ctrl+C)
-- Restart webhook listener
-- Copy new secret to `.env`
-- Restart backend
-
-### Issue: "Cannot find module" errors
-**Solution:** Reinstall dependencies
-```bash
-cd backend/node
-rm -r node_modules
-npm install
-npm run dev
-```
-
-### Issue: Port 4000 or 3000 already in use
-**Solution:** Change port in `.env` or kill process using that port
-
----
-
-## 📁 Key Files Explained
-
-### `server.js`
-- Main Express application
-- Sets up all API routes
-- Handles CORS and middleware
-- Starts the server on port 4000
-
-### `paymentController.js`
-- Handles all payment-related requests
-- Creates Stripe checkout sessions
-- Retrieves payment status
-- Manages transaction records
-
-### `webhookController.js`
-- Receives and processes Stripe webhook events
-- Credits tokens upon successful payment
-- Handles payment failures and refunds
-- Logs all webhook events
-
-### `tokenService.js`
-- Credits tokens to customer wallets
-- Deducts tokens for refunds
-- Simulates token transfer (demo mode)
-- Can be extended for blockchain integration
-
-### `databaseService.js`
-- Stores transaction records in memory (demo)
-- Can be replaced with PostgreSQL/MongoDB
-- Tracks pending, completed, and failed transactions
-- Provides transaction history
-
-### `payment.js` (Frontend)
-- Handles form validation
-- Sends payment requests to backend
-- Shows loading states
-- Displays error messages
-
----
-
-## 🔐 Security Notes
-
-1. **Never commit `.env` file** - Add to `.gitignore`
-2. **Keep API keys secret** - Use environment variables only
-3. **Use HTTPS in production** - Not needed for localhost
-4. **Verify webhook signatures** - Already implemented
-5. **Validate all inputs** - Already implemented
-
----
-
-## 📈 Production Deployment
-
-When deploying to production:
-
-1. **Switch to Live Mode** in Stripe Dashboard
-2. **Get Live API Keys** (pk_live_..., sk_live_...)
-3. **Update `.env`** with live keys
-4. **Set NODE_ENV=production**
-5. **Deploy to server** (Heroku, AWS, DigitalOcean, etc.)
-6. **Create production webhook** in Stripe Dashboard
-7. **Use HTTPS URLs** for success/cancel pages
-
----
-
-## 📞 Support & Documentation
-
-- **Stripe API Docs:** https://stripe.com/docs
-- **Express.js Docs:** https://expressjs.com
-- **Test Cards:** https://stripe.com/docs/testing
-
----
-
-## ✅ Checklist for Running
-
-- [ ] Node.js installed (v16+)
-- [ ] Stripe account created
-- [ ] API keys obtained
-- [ ] `.env` file created with keys
-- [ ] `npm install` completed
-- [ ] Stripe CLI installed and logged in
-- [ ] 3 terminals ready for services
-- [ ] Backend runs without errors
-- [ ] Webhook listener running
-- [ ] Frontend accessible at localhost:3000
-- [ ] Test payment successful
-
----
-
-## 📝 Notes
-
-- Backend uses in-memory database (demo mode)
-- For production, integrate real database (PostgreSQL, MongoDB)
-- Token service simulates token transfer
-- For production, integrate blockchain smart contracts
-- All code is well-commented and follows best practices
-- Error handling implemented throughout
-- Production-ready logging and monitoring
-
----
-
-## 🎓 Academic Purpose
-
-This project was created for educational demonstration purposes to show:
-
-1. Stripe payment integration
-2. Webhook handling and verification
-3. RESTful API design
-4. Frontend-backend communication
-5. Error handling and logging
-6. Centralized wallet management
-7. Transaction processing pipeline
-
----
-
 ## 👤 Developer
 
-**Name:** Thrushith  
+**Name:** Thrushith Yelamanchili  
 **Project:** Stripe Token Payment System with Centralized Wallets  
 **Completed:** November 2025  
 **Status:** ✅ Ready for Demonstration
@@ -470,13 +264,3 @@ This project was created for educational demonstration purposes to show:
 ## 📄 License
 
 MIT License - Free to use and modify
-
----
-
-## 🎉 You're All Set!
-
-Everything is ready to run. Follow the "Running the System" section above to get started.
-
-For questions or issues, refer to the Troubleshooting section.
-
-**Enjoy!** 🚀
