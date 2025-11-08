@@ -268,44 +268,6 @@ Expected: Additional authentication required
 
 ---
 
-## 🔄 Restarting After Computer Shutdown
-
-If you turn off your computer and want to restart:
-
-### 1. Verify Environment Variables
-
-Make sure `.env` file still has all keys:
-```bash
-cd backend/node
-cat .env  # View contents
-```
-
-### 2. Restart All 3 Services
-
-**Terminal 1:**
-```bash
-cd backend/node
-npm run dev
-```
-
-**Terminal 2:**
-```bash
-cd backend/node
-stripe listen --forward-to localhost:4000/api/webhook
-```
-
-**Terminal 3:**
-```bash
-cd frontend
-python -m http.server 3000
-```
-
-### 3. Access Application
-
-Open: http://localhost:3000
-
----
-
 ## 👤 Developer
 
 **Name:** Thrushith  
