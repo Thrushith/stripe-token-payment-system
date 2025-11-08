@@ -1,6 +1,6 @@
 # 🪙 Stripe Token Payment System - Complete Setup Guide
 
-**Developer:** Thrushith  
+**Developer:** Thrushith Yelamanchili
 **Created:** November 2025  
 **Status:** ✅ Production Ready
 
@@ -254,7 +254,7 @@ Click "Pay $100.00"
 
 ## 👤 Developer
 
-**Name:** Thrushith  
+**Name:** Thrushith Yelamanchili
 **Project:** Stripe Token Payment System with Centralized Wallets  
 **Completed:** November 2025  
 **Status:** ✅ Ready for Demonstration
