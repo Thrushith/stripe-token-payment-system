@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Purchase System - Stripe Integration</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🪙 Token Purchase System</h1>
+            <p class="subtitle">Buy tokens securely with Stripe - No MetaMask required!</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2>Purchase Tokens</h2>
+                
+                <form id="tokenPurchaseForm">
+                    <div class="form-group">
+                        <label for="customerName">Full Name *</label>
+                        <input 
+                            type="text" 
+                            id="customerName" 
+                            name="customerName" 
+                            placeholder="John Doe"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customerEmail">Email Address *</label>
+                        <input 
+                            type="email" 
+                            id="customerEmail" 
+                            name="customerEmail" 
+                            placeholder="[email protected]"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userId">User ID *</label>
+                        <input 
+                            type="text" 
+                            id="userId" 
+                            name="userId" 
+                            placeholder="user_12345"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customWalletAddress">Your Wallet Address *</label>
+                        <input 
+                            type="text" 
+                            id="customWalletAddress" 
+                            name="customWalletAddress" 
+                            placeholder="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+                            required
+                        >
+                        <small>This is your centralized encrypted wallet</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tokenAmount">Number of Tokens *</label>
+                        <input 
+                            type="number" 
+                            id="tokenAmount" 
+                            name="tokenAmount" 
+                            min="1" 
+                            max="10000"
+                            value="100"
+                            required
+                        >
+                        <small>Price: $<span id="pricePerToken">1</span> per token</small>
+                    </div>
+
+                    <div class="total-section">
+                        <h3>Total Amount</h3>
+                        <div class="total-amount">$<span id="totalAmount">100</span></div>
+                        <div class="token-info">
+                            You will receive <strong><span id="displayTokens">100</span> tokens</strong>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="buyTokensBtn" class="btn-primary">
+                        🛒 Proceed to Payment
+                    </button>
+                </form>
+
+                <div id="loadingIndicator" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Processing your request...</p>
+                </div>
+
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+            </div>
+
+            <div class="info-section">
+                <h3>ℹ️ How It Works</h3>
+                <ol>
+                    <li>Enter your details and select the number of tokens</li>
+                    <li>Click "Proceed to Payment" to go to secure Stripe checkout</li>
+                    <li>Complete payment with your credit/debit card</li>
+                    <li>Tokens are automatically credited to your wallet</li>
+                    <li>Receive email confirmation</li>
+                </ol>
+
+                <div class="security-note">
+                    🔒 <strong>Secure Payment</strong> - All payments processed securely through Stripe. 
+                    We never store your card details.
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h3>🧪 Demo Testing</h3>
+                <p>For testing, use these Stripe test cards:</p>
+                <ul>
+                    <li><strong>Success:</strong> 4242 4242 4242 4242</li>
+                    <li><strong>Requires Auth:</strong> 4000 0025 0000 3155</li>
+                    <li><strong>Declined:</strong> 4000 0000 0000 0002</li>
+                </ul>
+                <p><small>Use any future expiry date, any 3-digit CVC, and any ZIP code</small></p>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Token Purchase System | Powered by Stripe</p>
+        </footer>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/payment.js"></script>
+</body>
+</html>

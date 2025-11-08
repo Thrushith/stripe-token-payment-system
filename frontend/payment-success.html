@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful!</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="success-container">
+            <div class="success-icon">✅</div>
+            <h1>Payment Successful!</h1>
+            <p class="success-message">
+                Your payment has been processed successfully. 
+                Tokens are being credited to your wallet.
+            </p>
+
+            <div class="transaction-details" id="transactionDetails">
+                <h3>Transaction Details</h3>
+                <div class="detail-row">
+                    <span class="label">Session ID:</span>
+                    <span class="value" id="sessionId">Loading...</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Status:</span>
+                    <span class="value status-badge">Completed</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Time:</span>
+                    <span class="value" id="timestamp"></span>
+                </div>
+            </div>
+
+            <div class="next-steps">
+                <h3>What's Next?</h3>
+                <ul>
+                    <li>✓ Tokens will be credited to your wallet within a few minutes</li>
+                    <li>✓ You'll receive a confirmation email shortly</li>
+                    <li>✓ Check your wallet balance to verify the tokens</li>
+                </ul>
+            </div>
+
+            <div class="action-buttons">
+                <a href="index.html" class="btn-primary">Buy More Tokens</a>
+                <button onclick="window.print()" class="btn-secondary">Print Receipt</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get session ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        
+        if (sessionId) {
+            document.getElementById('sessionId').textContent = sessionId;
+        } else {
+            document.getElementById('sessionId').textContent = 'N/A';
+        }
+        
+        // Display current timestamp
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        
+        // Optional: Fetch session details from backend
+        // fetchSessionDetails(sessionId);
+    </script>
+</body>
+</html>
