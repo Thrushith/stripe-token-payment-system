@@ -4,7 +4,7 @@
   "description": "Stripe Token Payment System - Centralized wallet solution",
   "main": "backend/node/server.js",
   "scripts": {
-    "install-deps": "cd backend/node && npm install",
+    "build": "cd backend/node && npm install",
     "start": "cd backend/node && npm start",
     "dev": "cd backend/node && npm run dev"
   },
