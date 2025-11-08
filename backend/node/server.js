@@ -22,8 +22,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // ==================== IMPORT CONTROLLERS & SERVICES ====================
 console.log('Loading controllers and services...');
 
-const paymentController = require('../controllers/paymentController');
-const webhookController = require('../controllers/webhookController');
+const paymentController = require('./controllers/paymentController');
+const webhookController = require('./controllers/webhookController');
 
 console.log('✓ Controllers loaded successfully');
 
