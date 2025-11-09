@@ -28,6 +28,7 @@ app.use((req, res, next) => {
 });
 
 // ==================== ROUTES ====================
+// ==================== ROUTES ====================
 
 app.get('/health', (req, res) => {
   res.json({
@@ -37,7 +38,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Payment Routes - ONLY include routes that exist in your controller
+// Payment Routes
 if (paymentController.createCheckoutSession) {
   app.post('/api/create-checkout-session', paymentController.createCheckoutSession);
 }
@@ -49,16 +50,13 @@ if (paymentController.createPaymentIntent) {
 // Webhook
 app.post('/api/webhook', express.raw({type: 'application/json'}), webhookController.handleWebhook);
 
-// 404 Handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
+// API Routes for Professor
+const apiController = require('./controllers/apiController');
+app.get('/api/user/:userId/transactions', apiController.getUserTransactions);
+app.get('/api/transaction/:transactionId', apiController.getTransaction);
+app.get('/api/transactions', apiController.getAllTransactions);
+app.post('/api/transaction/create', apiController.createTestTransaction);
 
-// Error Handler
-app.use((err, req, res, next) => {
-  console.error('Error:', err.message);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
 
 // ==================== START SERVER ====================
 
