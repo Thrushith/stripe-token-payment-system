@@ -1,11 +1,32 @@
 // ==================== API CONTROLLER ====================
 // Simple API endpoints for retrieving transaction data
 
-const transactionService = require('../services/transactionService');
+// In-memory storage for demo (replace with database in production)
+let transactions = [
+  {
+    id: "txn_demo_001",
+    userId: "user123",
+    amount: 25.00,
+    tokens: 25,
+    walletAddress: "0xABC123...",
+    status: "completed",
+    timestamp: "2025-11-08T10:30:00Z",
+    paymentMethod: "stripe"
+  },
+  {
+    id: "txn_demo_002",
+    userId: "user456",
+    amount: 50.00,
+    tokens: 50,
+    walletAddress: "0xDEF456...",
+    status: "completed",
+    timestamp: "2025-11-08T11:15:00Z",
+    paymentMethod: "stripe"
+  }
+];
 
 // GET /api/user/:userId/transactions
-// Get all transactions for a user
-exports.getUserTransactions = async (req, res) => {
+exports.getUserTransactions = (req, res) => {
   try {
     const { userId } = req.params;
     
@@ -16,27 +37,26 @@ exports.getUserTransactions = async (req, res) => {
       });
     }
 
-    const transactions = transactionService.getTransactionsByUserId(userId);
+    const userTransactions = transactions.filter(t => t.userId === userId);
     
     res.json({
       success: true,
       userId: userId,
-      count: transactions.length,
-      transactions: transactions
+      count: userTransactions.length,
+      transactions: userTransactions
     });
 
   } catch (error) {
-    console.error('Error fetching user transactions:', error);
+    console.error('Error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch transactions'
+      error: error.message
     });
   }
 };
 
 // GET /api/transaction/:transactionId
-// Get specific transaction by ID
-exports.getTransaction = async (req, res) => {
+exports.getTransaction = (req, res) => {
   try {
     const { transactionId } = req.params;
     
@@ -47,7 +67,7 @@ exports.getTransaction = async (req, res) => {
       });
     }
 
-    const transaction = transactionService.getTransactionById(transactionId);
+    const transaction = transactions.find(t => t.id === transactionId);
     
     if (!transaction) {
       return res.status(404).json({
@@ -62,50 +82,48 @@ exports.getTransaction = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching transaction:', error);
+    console.error('Error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch transaction'
+      error: error.message
     });
   }
 };
 
 // GET /api/transactions
-// Get all transactions (with optional filters)
-exports.getAllTransactions = async (req, res) => {
+exports.getAllTransactions = (req, res) => {
   try {
     const { status, limit } = req.query;
     
-    let transactions = transactionService.getAllTransactions();
+    let results = [...transactions];
     
     // Filter by status if provided
     if (status) {
-      transactions = transactions.filter(t => t.status === status);
+      results = results.filter(t => t.status === status);
     }
     
     // Limit results if provided
     if (limit) {
-      transactions = transactions.slice(0, parseInt(limit));
+      results = results.slice(0, parseInt(limit));
     }
 
     res.json({
       success: true,
-      count: transactions.length,
-      transactions: transactions
+      count: results.length,
+      transactions: results
     });
 
   } catch (error) {
-    console.error('Error fetching all transactions:', error);
+    console.error('Error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch transactions'
+      error: error.message
     });
   }
 };
 
 // POST /api/transaction/create
-// Create a test transaction (for demonstration)
-exports.createTestTransaction = async (req, res) => {
+exports.createTransaction = (req, res) => {
   try {
     const { userId, amount, tokens, walletAddress } = req.body;
     
@@ -124,10 +142,10 @@ exports.createTestTransaction = async (req, res) => {
       walletAddress: walletAddress || 'N/A',
       status: 'completed',
       timestamp: new Date().toISOString(),
-      paymentMethod: 'test'
+      paymentMethod: 'api'
     };
 
-    transactionService.saveTransaction(transaction);
+    transactions.push(transaction);
 
     res.json({
       success: true,
@@ -136,10 +154,10 @@ exports.createTestTransaction = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating transaction:', error);
+    console.error('Error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to create transaction'
+      error: error.message
     });
   }
 };
