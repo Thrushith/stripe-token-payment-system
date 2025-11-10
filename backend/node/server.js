@@ -2,12 +2,12 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
 const app = express();
 
 // ==================== MIDDLEWARE ====================
 
-// CORS - Allow all origins for API access
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'OPTIONS'],
@@ -17,71 +17,64 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(express.json());
 
-// Logging
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
 
-// ==================== ROUTES ====================
+// ==================== MONGODB CONNECTION ====================
 
-// Health Check
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    service: 'Stripe Token Payment System API',
-    version: '1.0.0'
-  });
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://erc3643-admin:jKtDVj9NxHMYNj6c@cluster1.96uvob6.mongodb.net/erc3643_production?retryWrites=true&w=majority&appName=Cluster1';
+
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => {
+  console.log('✅ MongoDB connected successfully');
+})
+.catch((err) => {
+  console.error('❌ MongoDB connection error:', err);
 });
 
-// Welcome/Home Route
+// ==================== ROUTES ====================
+
 app.get('/', (req, res) => {
   res.json({
     message: 'Stripe Token Payment System API',
     status: 'online',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     endpoints: {
       health: '/health',
       getAllTransactions: '/api/transactions',
       getUserTransactions: '/api/user/{userId}/transactions',
       getTransaction: '/api/transaction/{transactionId}',
       createTransaction: '/api/transaction/create'
-    },
-    documentation: 'See API_DOCUMENTATION.md for details'
+    }
   });
 });
 
-// API Controller
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    service: 'Stripe Token Payment System API',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
 const apiController = require('./controllers/apiController');
 
-// API Routes
 app.get('/api/transactions', apiController.getAllTransactions);
 app.get('/api/user/:userId/transactions', apiController.getUserTransactions);
 app.get('/api/transaction/:transactionId', apiController.getTransaction);
 app.post('/api/transaction/create', apiController.createTransaction);
 
-// Payment Routes (if they exist)
-try {
-  const paymentController = require('./controllers/paymentController');
-  const webhookController = require('./controllers/webhookController');
-  
-  if (paymentController.createCheckoutSession) {
-    app.post('/api/create-checkout-session', paymentController.createCheckoutSession);
-  }
-  
-  if (webhookController.handleWebhook) {
-    app.post('/api/webhook', express.raw({type: 'application/json'}), webhookController.handleWebhook);
-  }
-} catch (error) {
-  console.log('Payment routes not loaded (optional)');
-}
-
 // 404 Handler
 app.use((req, res) => {
   res.status(404).json({ 
     success: false,
-    error: 'Route not found',
-    path: req.path 
+    error: 'Route not found'
   });
 });
 
@@ -101,10 +94,8 @@ const PORT = process.env.PORT || 4000;
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`✅ API ready!`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-// Graceful Shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM: Closing server...');
   server.close(() => {
