@@ -171,7 +171,7 @@ async function createCheckoutSession(data) {
                 // Option 2: Show success and redirect after 2 seconds
                 showSuccess(`✅ Payment successful! Transaction ID: ${result.transaction.id}`);
                 setTimeout(() => {
-                    window.location.href = 'success.html?session_id=' + result.transaction.id;
+                    window.location.href = 'payment-success.html?session_id=' + result.transaction.id;
                 }, 2000);
             }
         } else {
