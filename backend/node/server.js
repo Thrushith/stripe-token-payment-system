@@ -8,10 +8,9 @@ const app = express();
 
 // ==================== MIDDLEWARE ====================
 
-// CORS - Allow Netlify frontend
 app.use(cors({
-  origin: '*', // Allow all origins for now
-  credentials: true,
+  origin: '*',
+  credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -19,7 +18,6 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(express.json());
 
-// Logging
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
@@ -40,7 +38,6 @@ mongoose.connect(MONGODB_URI)
 
 // ==================== MODELS ====================
 
-// Transaction Model
 const transactionSchema = new mongoose.Schema({
   userId: { type: String, required: true, index: true },
   transactionId: { type: String, unique: true, required: true },
@@ -54,7 +51,7 @@ const transactionSchema = new mongoose.Schema({
   stripeSessionId: String,
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
-}, { collection: 'transactions' }); // Use existing collection
+}, { collection: 'transactions' });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);
 
@@ -88,21 +85,58 @@ app.get('/health', (req, res) => {
 
 // ==================== PAYMENT ENDPOINTS ====================
 
-// Create Checkout Session (when user clicks "Proceed to Payment")
+// Create Checkout Session with REAL STRIPE
 app.post('/api/create-checkout-session', async (req, res) => {
   try {
-    console.log('📥 Received payment request:', req.body);
+    console.log('📥 Checkout request received:', req.body);
     
     const { userId, email, fullName, amount, tokens, walletAddress } = req.body;
     
-    if (!userId || !amount || !tokens) {
+    // Validate
+    if (!userId || !amount || !tokens || !email) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: userId, amount, tokens'
+        error: 'Missing required fields: userId, amount, tokens, email'
       });
     }
 
-    // Create transaction in MongoDB
+    // Initialize Stripe
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_51SQVqVJLQxGcJ3163jizOziPR2tqaWoNaFhWLxQuZMJgpa7DO458xuEePAV8FhuK0cupFkwhcOhGTspeLlnYBi9k00SLQF3hee');
+    const frontendUrl = process.env.FRONTEND_URL || 'https://stipe-token-system.netlify.app';
+
+    console.log('💳 Creating STRIPE checkout session...');
+
+    // Create REAL Stripe session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `${tokens} Tokens`,
+            description: `Token purchase for ${fullName}`
+          },
+          unit_amount: Math.round(amount * 100), // Convert to cents
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      customer_email: email,
+      client_reference_id: userId,
+      success_url: `${frontendUrl}/payment-success.html?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${frontendUrl}/index.html?error=cancelled`,
+      metadata: {
+        userId,
+        fullName,
+        tokens: tokens.toString(),
+        walletAddress: walletAddress || 'N/A'
+      }
+    });
+
+    console.log('✅ STRIPE session created:', session.id);
+    console.log('🔗 Checkout URL:', session.url);
+
+    // Save to MongoDB with pending status
     const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     const transaction = new Transaction({
@@ -113,34 +147,36 @@ app.post('/api/create-checkout-session', async (req, res) => {
       amount: parseFloat(amount),
       tokens: parseInt(tokens),
       walletAddress: walletAddress || 'N/A',
-      status: 'completed', // Mark as completed for demo
+      status: 'pending', // Will update to completed when payment succeeds
       paymentMethod: 'stripe',
-      stripeSessionId: `sess_${Date.now()}`
+      stripeSessionId: session.id // Real Stripe session ID
     });
 
     await transaction.save();
     
-    console.log('✅ Transaction saved:', transactionId);
+    console.log('✅ Transaction saved to MongoDB:', transactionId);
 
+    // Return the Stripe checkout URL to frontend
     res.json({
       success: true,
-      message: 'Payment processed successfully',
+      message: 'Checkout session created - redirect to Stripe',
+      sessionId: session.id,
+      checkoutUrl: session.url, // IMPORTANT: Frontend redirects to this!
       transaction: {
         id: transactionId,
         userId,
         amount,
         tokens,
-        status: 'completed'
-      },
-      // Return success URL
-      url: '/success.html?session_id=' + transactionId
+        status: 'pending'
+      }
     });
 
   } catch (error) {
-    console.error('❌ Payment error:', error);
+    console.error('❌ Stripe error:', error.message);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
+      details: error.raw?.message || 'Unknown error'
     });
   }
 });
