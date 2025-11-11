@@ -1,13 +1,15 @@
 // ==================== PAYMENT HANDLER ====================
-// Handles token purchase flow - Updated for MongoDB backend
+// Handles token purchase flow - Stripe Integration
+
 
 
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing payment form...');
-    console.log('API URL:', CONFIG.API_URL);
+    console.log('✅ DOM loaded, initializing payment form...');
+    console.log('📍 API URL:', CONFIG.API_URL);
     initializePaymentForm();
 });
+
 
 
 // ==================== INITIALIZE PAYMENT FORM ====================
@@ -16,21 +18,22 @@ function initializePaymentForm() {
     const tokenAmountInput = document.getElementById('tokenAmount');
     const buyButton = document.getElementById('buyTokensBtn');
     
-    console.log('Initializing payment form...');
+    console.log('🔧 Initializing payment form...');
     
     // Update total when token amount changes
     if (tokenAmountInput) {
         tokenAmountInput.addEventListener('input', updateTotal);
         updateTotal(); // Initial calculation
-        console.log('Token amount listener added');
+        console.log('✓ Token amount listener added');
     }
     
     // Handle form submission
     if (form) {
         form.addEventListener('submit', handleFormSubmit);
-        console.log('Form submission listener added');
+        console.log('✓ Form submission listener added');
     }
 }
+
 
 
 // ==================== UPDATE TOTAL AMOUNT ====================
@@ -42,14 +45,15 @@ function updateTotal() {
     document.getElementById('totalAmount').textContent = total.toFixed(2);
     document.getElementById('displayTokens').textContent = tokenAmount;
     
-    console.log(`Total updated: ${tokenAmount} tokens × $${pricePerToken} = $${total.toFixed(2)}`);
+    console.log(`💰 Total updated: ${tokenAmount} tokens × $${pricePerToken} = $${total.toFixed(2)}`);
 }
+
 
 
 // ==================== HANDLE FORM SUBMISSION ====================
 async function handleFormSubmit(event) {
     event.preventDefault();
-    console.log('Form submitted!');
+    console.log('📤 Form submitted!');
     
     // Get form data
     const formData = {
@@ -61,7 +65,7 @@ async function handleFormSubmit(event) {
         amount: (parseInt(document.getElementById('tokenAmount').value) || 0) * CONFIG.PRICE_PER_TOKEN
     };
     
-    console.log('Form data to send:', formData);
+    console.log('📋 Form data to send:', formData);
     
     // Validate
     if (!validateFormData(formData)) {
@@ -75,16 +79,17 @@ async function handleFormSubmit(event) {
     try {
         await createCheckoutSession(formData);
     } catch (error) {
-        console.error('Error:', error);
+        console.error('❌ Error:', error);
         showError(error.message || 'An error occurred. Please try again.');
         showLoading(false);
     }
 }
 
 
+
 // ==================== VALIDATE FORM DATA ====================
 function validateFormData(data) {
-    console.log('Validating form data...');
+    console.log('✓ Validating form data...');
     
     if (!data.fullName) {
         showError('Please enter your name');
@@ -116,6 +121,7 @@ function validateFormData(data) {
 }
 
 
+
 // ==================== EMAIL VALIDATION ====================
 function isValidEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -123,15 +129,15 @@ function isValidEmail(email) {
 }
 
 
+
 // ==================== CREATE CHECKOUT SESSION ====================
 async function createCheckoutSession(data) {
-    console.log('Creating checkout session...');
-    console.log('Sending data to backend:', data);
+    console.log('🎯 Creating checkout session...');
+    console.log('📤 Sending data to backend:', data);
     
     try {
         const url = `${CONFIG.API_URL}${CONFIG.ENDPOINTS.CREATE_CHECKOUT}`;
-        console.log('POST to:', url);
-        console.log('CORS enabled for:', CONFIG.API_URL);
+        console.log('🔗 POST to:', url);
         
         const response = await fetch(url, {
             method: 'POST',
@@ -148,34 +154,42 @@ async function createCheckoutSession(data) {
             })
         });
         
-        console.log('Response status:', response.status);
+        console.log('📨 Response status:', response.status);
         
         if (!response.ok) {
             const errorData = await response.json();
-            console.error('Backend error:', errorData);
+            console.error('❌ Backend error:', errorData);
             throw new Error(errorData.error || `Failed with status ${response.status}`);
         }
         
         const result = await response.json();
-        console.log('✅ Checkout session created:', result);
+        console.log('✅ Backend response:', result);
         
-        // Show success message
-        if (result.success) {
-            showSuccess(`✅ Payment successful! Transaction ID: ${result.transaction.id}`);
+        // ==================== REDIRECT TO STRIPE CHECKOUT ====================
+        if (result.success && result.checkoutUrl) {
+            console.log('🔄 Redirecting to STRIPE CHECKOUT...');
+            console.log('🔗 Stripe URL:', result.checkoutUrl);
             
-            // Store transaction details for success page
+            // Store transaction details before redirect
             sessionStorage.setItem('transactionDetails', JSON.stringify({
                 id: result.transaction.id,
                 amount: result.transaction.amount,
                 tokens: result.transaction.tokens,
                 fullName: data.fullName,
-                email: data.email
+                email: data.email,
+                sessionId: result.sessionId
             }));
             
-            // Redirect to success page after 1.5 seconds
+            // REDIRECT TO STRIPE - THIS IS THE KEY PART!
+            window.location.href = result.checkoutUrl;
+            
+        } else if (result.success) {
+            // Fallback if no checkoutUrl (shouldn't happen with real Stripe)
+            console.warn('⚠️ No checkoutUrl in response, showing success');
+            showSuccess(`✅ Payment initiated! Transaction ID: ${result.transaction.id}`);
+            
             setTimeout(() => {
                 const successPath = './payment-success.html?session_id=' + encodeURIComponent(result.transaction.id);
-                console.log('🔄 Redirecting to:', successPath);
                 window.location.href = successPath;
             }, 1500);
         } else {
@@ -188,6 +202,7 @@ async function createCheckoutSession(data) {
         throw error;
     }
 }
+
 
 // ==================== CREATE PAYMENT INTENT (ALTERNATIVE) ====================
 // This is an alternative approach if you want to use Payment Intent instead of Checkout
@@ -222,6 +237,7 @@ async function createPaymentIntent(data) {
 }
 
 
+
 // ==================== CHECK PAYMENT STATUS ====================
 async function checkPaymentStatus(paymentIntentId) {
     try {
@@ -245,6 +261,7 @@ async function checkPaymentStatus(paymentIntentId) {
 }
 
 
+
 // ==================== UI HELPERS ====================
 function showLoading(show) {
     const loadingIndicator = document.getElementById('loadingIndicator');
@@ -261,6 +278,7 @@ function showLoading(show) {
 }
 
 
+
 function showError(message) {
     const errorElement = document.getElementById('errorMessage');
     if (errorElement) {
@@ -271,8 +289,9 @@ function showError(message) {
         // Scroll to error
         errorElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-    console.error('Error shown to user:', message);
+    console.error('⚠️ Error shown to user:', message);
 }
+
 
 
 function hideError() {
@@ -281,6 +300,7 @@ function hideError() {
         errorElement.style.display = 'none';
     }
 }
+
 
 
 function showSuccess(message) {
@@ -292,8 +312,9 @@ function showSuccess(message) {
         
         errorElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-    console.log('Success message:', message);
+    console.log('✅ Success message:', message);
 }
+
 
 
 // ==================== DEMO HELPERS ====================
@@ -309,7 +330,8 @@ function fillTestData() {
 }
 
 
-// Log configuration on page load
+
+// ==================== INITIALIZATION ====================
 console.log('🚀 Payment system initialized');
 console.log('📍 API Endpoint:', CONFIG.API_URL);
 console.log('💡 Demo tip: Type fillTestData() in console to auto-fill form with test data');
