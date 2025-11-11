@@ -1,11 +1,14 @@
 // ==================== PAYMENT HANDLER ====================
-// Handles token purchase flow
+// Handles token purchase flow - Updated for MongoDB backend
+
 
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing payment form...');
+    console.log('API URL:', CONFIG.API_URL);
     initializePaymentForm();
 });
+
 
 // ==================== INITIALIZE PAYMENT FORM ====================
 function initializePaymentForm() {
@@ -29,6 +32,7 @@ function initializePaymentForm() {
     }
 }
 
+
 // ==================== UPDATE TOTAL AMOUNT ====================
 function updateTotal() {
     const tokenAmount = parseInt(document.getElementById('tokenAmount').value) || 0;
@@ -41,6 +45,7 @@ function updateTotal() {
     console.log(`Total updated: ${tokenAmount} tokens × $${pricePerToken} = $${total.toFixed(2)}`);
 }
 
+
 // ==================== HANDLE FORM SUBMISSION ====================
 async function handleFormSubmit(event) {
     event.preventDefault();
@@ -48,14 +53,15 @@ async function handleFormSubmit(event) {
     
     // Get form data
     const formData = {
-        customerName: document.getElementById('customerName').value.trim(),
-        customerEmail: document.getElementById('customerEmail').value.trim(),
+        fullName: document.getElementById('customerName').value.trim(),
+        email: document.getElementById('customerEmail').value.trim(),
         userId: document.getElementById('userId').value.trim(),
-        customWalletAddress: document.getElementById('customWalletAddress').value.trim(),
-        tokenAmount: parseInt(document.getElementById('tokenAmount').value)
+        walletAddress: document.getElementById('customWalletAddress').value.trim(),
+        tokens: parseInt(document.getElementById('tokenAmount').value),
+        amount: (parseInt(document.getElementById('tokenAmount').value) || 0) * CONFIG.PRICE_PER_TOKEN
     };
     
-    console.log('Form data:', formData);
+    console.log('Form data to send:', formData);
     
     // Validate
     if (!validateFormData(formData)) {
@@ -75,16 +81,17 @@ async function handleFormSubmit(event) {
     }
 }
 
+
 // ==================== VALIDATE FORM DATA ====================
 function validateFormData(data) {
     console.log('Validating form data...');
     
-    if (!data.customerName) {
+    if (!data.fullName) {
         showError('Please enter your name');
         return false;
     }
     
-    if (!data.customerEmail || !isValidEmail(data.customerEmail)) {
+    if (!data.email || !isValidEmail(data.email)) {
         showError('Please enter a valid email address');
         return false;
     }
@@ -94,12 +101,12 @@ function validateFormData(data) {
         return false;
     }
     
-    if (!data.customWalletAddress) {
+    if (!data.walletAddress) {
         showError('Please enter your wallet address');
         return false;
     }
     
-    if (!data.tokenAmount || data.tokenAmount <= 0) {
+    if (!data.tokens || data.tokens <= 0) {
         showError('Please enter a valid token amount');
         return false;
     }
@@ -108,11 +115,13 @@ function validateFormData(data) {
     return true;
 }
 
+
 // ==================== EMAIL VALIDATION ====================
 function isValidEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
 }
+
 
 // ==================== CREATE CHECKOUT SESSION ====================
 async function createCheckoutSession(data) {
@@ -122,38 +131,59 @@ async function createCheckoutSession(data) {
     try {
         const url = `${CONFIG.API_URL}${CONFIG.ENDPOINTS.CREATE_CHECKOUT}`;
         console.log('POST to:', url);
+        console.log('CORS enabled for:', CONFIG.API_URL);
         
         const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data)
+            credentials: 'include',
+            body: JSON.stringify({
+                userId: data.userId,
+                email: data.email,
+                fullName: data.fullName,
+                amount: data.amount,
+                tokens: data.tokens,
+                walletAddress: data.walletAddress
+            })
         });
         
         console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
         
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to create checkout session');
+            console.error('Backend error:', errorData);
+            throw new Error(errorData.error || `Failed with status ${response.status}`);
         }
         
         const result = await response.json();
-        console.log('Checkout session created:', result);
+        console.log('✅ Checkout session created:', result);
         
-        // Redirect to Stripe Checkout
-        if (result.url) {
-            console.log('Redirecting to Stripe Checkout...');
-            window.location.href = result.url;
+        // Show success message
+        if (result.success) {
+            // Option 1: Redirect to success page
+            if (result.url) {
+                console.log('Redirecting to:', result.url);
+                window.location.href = result.url;
+            } else {
+                // Option 2: Show success and redirect after 2 seconds
+                showSuccess(`✅ Payment successful! Transaction ID: ${result.transaction.id}`);
+                setTimeout(() => {
+                    window.location.href = 'success.html?session_id=' + result.transaction.id;
+                }, 2000);
+            }
         } else {
-            throw new Error('No checkout URL received');
+            throw new Error(result.error || 'Payment processing failed');
         }
         
     } catch (error) {
-        console.error('Checkout session error:', error);
+        console.error('❌ Checkout session error:', error);
         throw error;
     }
 }
+
 
 // ==================== CREATE PAYMENT INTENT (ALTERNATIVE) ====================
 // This is an alternative approach if you want to use Payment Intent instead of Checkout
@@ -161,7 +191,7 @@ async function createPaymentIntent(data) {
     console.log('Creating payment intent...');
     
     try {
-        const url = `${CONFIG.API_URL}${CONFIG.ENDPOINTS.CREATE_PAYMENT_INTENT}`;
+        const url = `${CONFIG.API_URL}${CONFIG.ENDPOINTS.CREATE_PAYMENT_INTENT || '/api/create-payment-intent'}`;
         
         const response = await fetch(url, {
             method: 'POST',
@@ -187,10 +217,11 @@ async function createPaymentIntent(data) {
     }
 }
 
+
 // ==================== CHECK PAYMENT STATUS ====================
 async function checkPaymentStatus(paymentIntentId) {
     try {
-        const url = `${CONFIG.API_URL}${CONFIG.ENDPOINTS.PAYMENT_STATUS}/${paymentIntentId}`;
+        const url = `${CONFIG.API_URL}/api/transaction/${paymentIntentId}`;
         
         const response = await fetch(url);
         
@@ -209,6 +240,7 @@ async function checkPaymentStatus(paymentIntentId) {
     }
 }
 
+
 // ==================== UI HELPERS ====================
 function showLoading(show) {
     const loadingIndicator = document.getElementById('loadingIndicator');
@@ -224,17 +256,20 @@ function showLoading(show) {
     }
 }
 
+
 function showError(message) {
     const errorElement = document.getElementById('errorMessage');
     if (errorElement) {
         errorElement.textContent = message;
         errorElement.style.display = 'block';
+        errorElement.style.color = 'red';
         
         // Scroll to error
         errorElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     console.error('Error shown to user:', message);
 }
+
 
 function hideError() {
     const errorElement = document.getElementById('errorMessage');
@@ -243,17 +278,34 @@ function hideError() {
     }
 }
 
+
+function showSuccess(message) {
+    const errorElement = document.getElementById('errorMessage');
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+        errorElement.style.color = 'green';
+        
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    console.log('Success message:', message);
+}
+
+
 // ==================== DEMO HELPERS ====================
 // Quick fill form with test data for demo purposes
 function fillTestData() {
     document.getElementById('customerName').value = 'John Doe';
-    document.getElementById('customerEmail').value = '[email protected]';
+    document.getElementById('customerEmail').value = 'john@example.com';
     document.getElementById('userId').value = 'user_12345';
     document.getElementById('customWalletAddress').value = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
     document.getElementById('tokenAmount').value = 100;
     updateTotal();
-    console.log('Test data filled!');
+    console.log('✅ Test data filled! Ready to test payment.');
 }
 
-// Make it available in console during demo
+
+// Log configuration on page load
+console.log('🚀 Payment system initialized');
+console.log('📍 API Endpoint:', CONFIG.API_URL);
 console.log('💡 Demo tip: Type fillTestData() in console to auto-fill form with test data');
