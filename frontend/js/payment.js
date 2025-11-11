@@ -138,7 +138,7 @@ async function createCheckoutSession(data) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include',
+            // credentials: 'include',
             body: JSON.stringify({
                 userId: data.userId,
                 email: data.email,
