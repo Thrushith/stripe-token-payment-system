@@ -138,7 +138,6 @@ async function createCheckoutSession(data) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            // credentials: 'include',
             body: JSON.stringify({
                 userId: data.userId,
                 email: data.email,
@@ -150,7 +149,6 @@ async function createCheckoutSession(data) {
         });
         
         console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
         
         if (!response.ok) {
             const errorData = await response.json();
@@ -163,27 +161,33 @@ async function createCheckoutSession(data) {
         
         // Show success message
         if (result.success) {
-            // Option 1: Redirect to success page
-            if (result.url) {
-                console.log('Redirecting to:', result.url);
-                window.location.href = result.url;
-            } else {
-                // Option 2: Show success and redirect after 2 seconds
-                showSuccess(`✅ Payment successful! Transaction ID: ${result.transaction.id}`);
-                setTimeout(() => {
-                    window.location.href = 'payment-success.html?session_id=' + result.transaction.id;
-                }, 2000);
-            }
+            showSuccess(`✅ Payment successful! Transaction ID: ${result.transaction.id}`);
+            
+            // Store transaction details for success page
+            sessionStorage.setItem('transactionDetails', JSON.stringify({
+                id: result.transaction.id,
+                amount: result.transaction.amount,
+                tokens: result.transaction.tokens,
+                fullName: data.fullName,
+                email: data.email
+            }));
+            
+            // Redirect to success page after 1.5 seconds
+            setTimeout(() => {
+                const successPath = './payment-success.html?session_id=' + encodeURIComponent(result.transaction.id);
+                console.log('🔄 Redirecting to:', successPath);
+                window.location.href = successPath;
+            }, 1500);
         } else {
             throw new Error(result.error || 'Payment processing failed');
         }
         
     } catch (error) {
         console.error('❌ Checkout session error:', error);
+        showLoading(false);
         throw error;
     }
 }
-
 
 // ==================== CREATE PAYMENT INTENT (ALTERNATIVE) ====================
 // This is an alternative approach if you want to use Payment Intent instead of Checkout
