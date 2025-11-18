@@ -3,14 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PropT Token Purchase System - Stripe Integration</title>
+    <title>PropT Token Purchase System - Global Payments</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Additional styles for country selector */
+        .payment-methods-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f8ff;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .country-flag {
+            font-size: 20px;
+            margin-right: 5px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>🪙 PropT Token Purchase</h1>
-            <p class="subtitle">Buy property tokens securely with Stripe - No MetaMask required!</p>
+            <p class="subtitle">Buy property tokens securely - Global Payment Methods Supported! 🌍</p>
         </header>
 
         <main>
@@ -49,6 +65,49 @@
                             placeholder="user_12345"
                             required
                         >
+                    </div>
+
+                    <!-- NEW: Country Selector -->
+                    <div class="form-group">
+                        <label for="country">Country / Region *</label>
+                        <select id="country" name="country" required>
+                            <optgroup label="Asia Pacific">
+                                <option value="IN">🇮🇳 India (UPI, Cards)</option>
+                                <option value="CN">🇨🇳 China (Alipay, WeChat Pay)</option>
+                                <option value="MY">🇲🇾 Malaysia (GrabPay, FPX)</option>
+                                <option value="SG">🇸🇬 Singapore (GrabPay, PayNow)</option>
+                                <option value="ID">🇮🇩 Indonesia (GoPay)</option>
+                                <option value="TH">🇹🇭 Thailand (PromptPay)</option>
+                                <option value="JP">🇯🇵 Japan (Konbini)</option>
+                                <option value="KR">🇰🇷 South Korea (KakaoPay)</option>
+                                <option value="PH">🇵🇭 Philippines (GrabPay)</option>
+                                <option value="AU">🇦🇺 Australia</option>
+                            </optgroup>
+                            <optgroup label="Americas">
+                                <option value="US" selected>🇺🇸 United States</option>
+                                <option value="CA">🇨🇦 Canada</option>
+                                <option value="BR">🇧🇷 Brazil (Boleto)</option>
+                                <option value="MX">🇲🇽 Mexico (OXXO)</option>
+                            </optgroup>
+                            <optgroup label="Europe">
+                                <option value="GB">🇬🇧 United Kingdom</option>
+                                <option value="DE">🇩🇪 Germany (Giropay, Sofort)</option>
+                                <option value="FR">🇫🇷 France</option>
+                                <option value="NL">🇳🇱 Netherlands (iDEAL)</option>
+                                <option value="BE">🇧🇪 Belgium (Bancontact)</option>
+                                <option value="PL">🇵🇱 Poland (Przelewy24)</option>
+                                <option value="AT">🇦🇹 Austria (EPS)</option>
+                                <option value="ES">🇪🇸 Spain</option>
+                                <option value="IT">🇮🇹 Italy</option>
+                            </optgroup>
+                            <optgroup label="Middle East">
+                                <option value="AE">🇦🇪 UAE</option>
+                                <option value="SA">🇸🇦 Saudi Arabia</option>
+                            </optgroup>
+                        </select>
+                        <div class="payment-methods-info" id="paymentMethodsDisplay">
+                            <strong>Available:</strong> 💳 Card
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -101,16 +160,17 @@
             <div class="info-section">
                 <h3>ℹ️ How It Works</h3>
                 <ol>
+                    <li>Select your country to see available payment methods</li>
                     <li>Enter your details and select the number of tokens</li>
                     <li>Click "Proceed to Payment" to go to secure Stripe checkout</li>
-                    <li>Complete payment with your credit/debit card</li>
-                    <li>Tokens are automatically credited to your wallet</li>
+                    <li>Choose your preferred payment method (Card, UPI, Alipay, etc.)</li>
+                    <li>Complete payment - Tokens are automatically credited</li>
                     <li>Receive email confirmation</li>
                 </ol>
 
                 <div class="security-note">
-                    🔒 <strong>Secure Payment</strong> - All payments processed securely through Stripe. 
-                    We never store your card details.
+                    🔒 <strong>Secure Global Payments</strong> - All payments processed securely through Stripe. 
+                    We support 25+ countries and 50+ payment methods. We never store your payment details.
                 </div>
             </div>
 
@@ -121,23 +181,18 @@
                     <li><strong>Success:</strong> 4242 4242 4242 4242</li>
                     <li><strong>Requires Auth:</strong> 4000 0025 0000 3155</li>
                     <li><strong>Declined:</strong> 4000 0000 0000 0002</li>
+                    <li><strong>India UPI:</strong> Select India, any card works in test mode</li>
                 </ul>
                 <p><small>Use any future expiry date, any 3-digit CVC, and any ZIP code</small></p>
             </div>
         </main>
 
         <footer>
-            <p>&copy; 2025 Token Purchase System | Powered by Thrushith</p>
+            <p>&copy; 2025 PropT Token Purchase System | Powered by Thrushith | 🌍 Global Payments</p>
         </footer>
     </div>
 
     <script src="js/config.js"></script>
     <script src="js/payment.js"></script>
-    <script>
-    // Make fillTestData available globally
-    console.log('✅ Scripts loaded');
-    console.log('💡 Type fillTestData() to auto-fill form');
-</script>
-
 </body>
 </html>
