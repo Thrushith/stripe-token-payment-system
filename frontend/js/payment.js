@@ -1,7 +1,5 @@
 // ==================== PAYMENT HANDLER ====================
-// Handles token purchase flow - Stripe Integration
-
-
+// Handles token purchase flow - Stripe Integration with Global Payment Methods
 
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', function() {
@@ -10,12 +8,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePaymentForm();
 });
 
-
-
 // ==================== INITIALIZE PAYMENT FORM ====================
 function initializePaymentForm() {
     const form = document.getElementById('tokenPurchaseForm');
     const tokenAmountInput = document.getElementById('tokenAmount');
+    const countrySelect = document.getElementById('country');
     const buyButton = document.getElementById('buyTokensBtn');
     
     console.log('🔧 Initializing payment form...');
@@ -27,6 +24,13 @@ function initializePaymentForm() {
         console.log('✓ Token amount listener added');
     }
     
+    // Show payment methods when country changes
+    if (countrySelect) {
+        countrySelect.addEventListener('change', updatePaymentMethodsDisplay);
+        updatePaymentMethodsDisplay(); // Initial display
+        console.log('✓ Country selector listener added');
+    }
+    
     // Handle form submission
     if (form) {
         form.addEventListener('submit', handleFormSubmit);
@@ -34,7 +38,39 @@ function initializePaymentForm() {
     }
 }
 
-
+// ==================== UPDATE PAYMENT METHODS DISPLAY ====================
+function updatePaymentMethodsDisplay() {
+    const country = document.getElementById('country')?.value || 'US';
+    const methodsDisplay = document.getElementById('paymentMethodsDisplay');
+    
+    const paymentMethods = {
+        'IN': ['💳 Card', '📱 UPI'],
+        'CN': ['💳 Card', '🅰️ Alipay', '💬 WeChat Pay'],
+        'MY': ['💳 Card', '🚗 GrabPay', '🏦 FPX'],
+        'SG': ['💳 Card', '🚗 GrabPay', '💰 PayNow'],
+        'ID': ['💳 Card', '🏍️ GoPay'],
+        'TH': ['💳 Card', '💸 PromptPay'],
+        'JP': ['💳 Card', '🏪 Konbini'],
+        'KR': ['💳 Card', '💬 KakaoPay'],
+        'PH': ['💳 Card', '🚗 GrabPay', '💳 PayMaya'],
+        'BR': ['💳 Card', '🎫 Boleto'],
+        'MX': ['💳 Card', '🏪 OXXO'],
+        'NL': ['💳 Card', '🏦 iDEAL'],
+        'BE': ['💳 Card', '🏦 Bancontact'],
+        'PL': ['💳 Card', '🏦 Przelewy24'],
+        'DE': ['💳 Card', '🏦 Giropay', '🏦 Sofort'],
+        'GB': ['💳 Card', '🏦 BACS'],
+        'US': ['💳 Card', '🏦 ACH'],
+    };
+    
+    const methods = paymentMethods[country] || ['💳 Card'];
+    
+    if (methodsDisplay) {
+        methodsDisplay.innerHTML = '<strong>Available:</strong> ' + methods.join(', ');
+    }
+    
+    console.log('🌍 Country:', country, '| Payment methods:', methods);
+}
 
 // ==================== UPDATE TOTAL AMOUNT ====================
 function updateTotal() {
@@ -48,21 +84,20 @@ function updateTotal() {
     console.log(`💰 Total updated: ${tokenAmount} tokens × $${pricePerToken} = $${total.toFixed(2)}`);
 }
 
-
-
 // ==================== HANDLE FORM SUBMISSION ====================
 async function handleFormSubmit(event) {
     event.preventDefault();
     console.log('📤 Form submitted!');
     
-    // Get form data
+    // Get form data including country
     const formData = {
         fullName: document.getElementById('customerName').value.trim(),
         email: document.getElementById('customerEmail').value.trim(),
         userId: document.getElementById('userId').value.trim(),
         walletAddress: document.getElementById('customWalletAddress').value.trim(),
         tokens: parseInt(document.getElementById('tokenAmount').value),
-        amount: (parseInt(document.getElementById('tokenAmount').value) || 0) * CONFIG.PRICE_PER_TOKEN
+        amount: (parseInt(document.getElementById('tokenAmount').value) || 0) * CONFIG.PRICE_PER_TOKEN,
+        country: document.getElementById('country')?.value || 'US' // NEW: Include country
     };
     
     console.log('📋 Form data to send:', formData);
@@ -84,8 +119,6 @@ async function handleFormSubmit(event) {
         showLoading(false);
     }
 }
-
-
 
 // ==================== VALIDATE FORM DATA ====================
 function validateFormData(data) {
@@ -120,15 +153,11 @@ function validateFormData(data) {
     return true;
 }
 
-
-
 // ==================== EMAIL VALIDATION ====================
 function isValidEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
 }
-
-
 
 // ==================== CREATE CHECKOUT SESSION ====================
 async function createCheckoutSession(data) {
@@ -150,7 +179,8 @@ async function createCheckoutSession(data) {
                 fullName: data.fullName,
                 amount: data.amount,
                 tokens: data.tokens,
-                walletAddress: data.walletAddress
+                walletAddress: data.walletAddress,
+                country: data.country // NEW: Send country to backend
             })
         });
         
@@ -164,6 +194,9 @@ async function createCheckoutSession(data) {
         
         const result = await response.json();
         console.log('✅ Backend response:', result);
+        console.log('🌍 Country:', result.country);
+        console.log('💵 Currency:', result.currency);
+        console.log('💳 Payment methods:', result.paymentMethods);
         
         // ==================== REDIRECT TO STRIPE CHECKOUT ====================
         if (result.success && result.checkoutUrl) {
@@ -177,7 +210,9 @@ async function createCheckoutSession(data) {
                 tokens: result.transaction.tokens,
                 fullName: data.fullName,
                 email: data.email,
-                sessionId: result.sessionId
+                sessionId: result.sessionId,
+                country: result.country,
+                currency: result.currency
             }));
             
             // REDIRECT TO STRIPE - THIS IS THE KEY PART!
@@ -203,9 +238,7 @@ async function createCheckoutSession(data) {
     }
 }
 
-
 // ==================== CREATE PAYMENT INTENT (ALTERNATIVE) ====================
-// This is an alternative approach if you want to use Payment Intent instead of Checkout
 async function createPaymentIntent(data) {
     console.log('Creating payment intent...');
     
@@ -236,8 +269,6 @@ async function createPaymentIntent(data) {
     }
 }
 
-
-
 // ==================== CHECK PAYMENT STATUS ====================
 async function checkPaymentStatus(paymentIntentId) {
     try {
@@ -260,8 +291,6 @@ async function checkPaymentStatus(paymentIntentId) {
     }
 }
 
-
-
 // ==================== UI HELPERS ====================
 function showLoading(show) {
     const loadingIndicator = document.getElementById('loadingIndicator');
@@ -277,8 +306,6 @@ function showLoading(show) {
     }
 }
 
-
-
 function showError(message) {
     const errorElement = document.getElementById('errorMessage');
     if (errorElement) {
@@ -292,16 +319,12 @@ function showError(message) {
     console.error('⚠️ Error shown to user:', message);
 }
 
-
-
 function hideError() {
     const errorElement = document.getElementById('errorMessage');
     if (errorElement) {
         errorElement.style.display = 'none';
     }
 }
-
-
 
 function showSuccess(message) {
     const errorElement = document.getElementById('errorMessage');
@@ -315,23 +338,25 @@ function showSuccess(message) {
     console.log('✅ Success message:', message);
 }
 
-
-
 // ==================== DEMO HELPERS ====================
-// Quick fill form with test data for demo purposes
 function fillTestData() {
     document.getElementById('customerName').value = 'John Doe';
     document.getElementById('customerEmail').value = 'john@example.com';
     document.getElementById('userId').value = 'user_12345';
     document.getElementById('customWalletAddress').value = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
     document.getElementById('tokenAmount').value = 100;
+    
+    // Set country to India for demo
+    if (document.getElementById('country')) {
+        document.getElementById('country').value = 'IN';
+        updatePaymentMethodsDisplay();
+    }
+    
     updateTotal();
-    console.log('✅ Test data filled! Ready to test payment.');
+    console.log('✅ Test data filled! Ready to test payment with India (UPI).');
 }
 
-
-
 // ==================== INITIALIZATION ====================
-console.log('🚀 Payment system initialized');
+console.log('🚀 Payment system initialized with global payment support');
 console.log('📍 API Endpoint:', CONFIG.API_URL);
 console.log('💡 Demo tip: Type fillTestData() in console to auto-fill form with test data');
